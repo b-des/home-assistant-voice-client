@@ -1,0 +1,13 @@
+[Unit]
+Description=Assistant Service
+#After=network.target
+After=multi-user.target
+
+[Service]
+Type=idle
+Restart=on-success
+User=orangepi
+ExecStart=/bin/bash -c 'cd ~/home-assistant-voice-client/ && source env/bin/activate && python app.py'
+
+[Install]
+WantedBy=multi-user.target
