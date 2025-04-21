@@ -46,10 +46,8 @@ class Client:
     async def peer_listener(self, callback):
         while True:
             msg = await self.sub.recv_string()
-            callback(msg)
             log.info(f"Got message from peer: {msg}")
-            if "wakeword" in msg:
-                log.info("Muting mic...")
+            callback(msg)
 
     async def router_listen(self, callback):
         await self.greet()

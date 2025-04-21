@@ -14,7 +14,7 @@ client = Client(config.get('ZEROMQ_ROUTER_HOST'), config.get('NAME'))
 
 
 def on_activation():
-    asyncio.run_coroutine_threadsafe(client.publish('wakeword'), main_loop)
+    asyncio.run_coroutine_threadsafe(client.publish('mute'), main_loop)
     audio.play_file_async('sounds/click.wav')
     asyncio.run_coroutine_threadsafe(client.send(Command.START_SPEAK.value, b''), main_loop)
 
@@ -26,6 +26,7 @@ def on_listen_phrase(chunk):
 
 def on_finish_phrase(speech_detected, data):
     print(f'speech_detected: {speech_detected}')
+    asyncio.run_coroutine_threadsafe(client.publish('unmute'), main_loop)
     if speech_detected:
         asyncio.run_coroutine_threadsafe(client.send(Command.FINISH.value, b''), main_loop)
     else:
@@ -46,7 +47,10 @@ def on_receive_data(tag, params, frame):
 
 
 def on_peer_message(message):
-    print(f'Peer message: {message}')
+    if message == 'mute':
+        runner.mute()
+    elif message == 'unmute':
+        runner.un_mute()
 
 
 queue = asyncio.Queue()
