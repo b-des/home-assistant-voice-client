@@ -186,7 +186,6 @@ class PreciseRunner(object):
     def un_mute(self):
         log.info('Unmute mic')
         self.is_paused = False
-        self.stream.stop_stream()
 
     def false_speech_callback(self):
         self.on_finish_phrase(self.speech_detected, None)
