@@ -23,7 +23,7 @@ class Client:
         self.pub.bind(f"tcp://*:{config.get('ZEROMQ_PEERS_PORT')}")
 
         self.sub = context.socket(zmq.SUB)
-        self.sub.setsockopt_string(zmq.SUBSCRIBE, "wakeword")
+        self.sub.setsockopt_string(zmq.SUBSCRIBE, "request")
 
         log.info(f'Connecting to {url}')
         self.socket = socket
