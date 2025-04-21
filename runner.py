@@ -179,15 +179,14 @@ class PreciseRunner(object):
 
     def mute(self, timeout=MUTE_TIMEOUT):
         log.info(f'Mute mic for {timeout} seconds')
-        self.stream.stop_stream()
         self.is_paused = True
         if timeout > 0:
             Timer(timeout, self.un_mute).start()
 
     def un_mute(self):
         log.info('Unmute mic')
-        self.stream.start_stream()
         self.is_paused = False
+        self.stream.stop_stream()
 
     def false_speech_callback(self):
         self.on_finish_phrase(self.speech_detected, None)
