@@ -7,11 +7,15 @@ import numpy as np
 import openwakeword
 from pysilero_vad import SileroVoiceActivityDetector
 from openwakeword.model import Model
-from config import config
 
+import logger
+from config import config
 
 openwakeword.utils.download_models()
 
+MUTE_TIMEOUT = int(config.get('MUTE_TIMEOUT', 0))
+
+log = logger.get(__name__)
 
 class TriggerDetector:
     """
@@ -172,6 +176,16 @@ class PreciseRunner(object):
         self.wake_word_detected = True
         self.false_speech_timer = Timer(timeout, self.false_speech_callback)
         self.false_speech_timer.start()
+
+    def mute(self, timeout=MUTE_TIMEOUT):
+        log.info(f'Mute mic for {timeout} seconds')
+        self.is_paused = True
+        if timeout > 0:
+            Timer(timeout, lambda: self.un_mute).start()
+
+    def un_mute(self):
+        log.info('Unmute mic')
+        self.is_paused = False
 
     def false_speech_callback(self):
         self.on_finish_phrase(self.speech_detected, None)
