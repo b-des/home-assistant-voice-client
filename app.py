@@ -14,7 +14,7 @@ client = Client(config.get('ZEROMQ_ROUTER_HOST'), config.get('NAME'))
 
 
 def on_activation():
-    client.publish('wakeword')
+    asyncio.run_coroutine_threadsafe(client.publish('wakeword'), main_loop)
     audio.play_file_async('sounds/click.wav')
     asyncio.run_coroutine_threadsafe(client.send(Command.START_SPEAK.value, b''), main_loop)
 
@@ -44,8 +44,10 @@ def on_receive_data(tag, params, frame):
     if tag == 'WAKEUP':
         runner.wake_up(params['wait_timeout'])
 
+
 def on_peer_message(message):
     print(f'Peer message: {message}')
+
 
 queue = asyncio.Queue()
 
@@ -67,11 +69,11 @@ if __name__ == "__main__":
 
     # p.force_wake_up()
     # tasks = [asyncio.create_task(coroutine) for coroutine in [client.run(None), runner.start()]]
-
     audio.play_file('sounds/boot.wav')
     threading.Thread(target=udp_listener, args=(main_loop, queue), daemon=True).start()
     threading.Thread(target=udp_broadcast, daemon=True).start()
-    main_loop.run_until_complete(asyncio.gather(client.start(on_peer_message, on_receive_data), runner.start(), udp_consumer()))
+    main_loop.run_until_complete(
+        asyncio.gather(client.start(on_receive_data, on_peer_message), runner.start(), udp_consumer()))
     try:
         print("[main] Starting asyncio event loop")
         main_loop.run_forever()

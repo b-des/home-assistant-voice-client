@@ -33,7 +33,7 @@ class Client:
         await self.socket.send_multipart([b"GREET", b""])
 
     async def publish(self, message):
-        log.info(f'Publish message to mesh: {message}')
+        log.info(f'Publish message to peers: {message}')
         self.pub.send_string(message)
 
     async def subscribe(self, ip):
