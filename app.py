@@ -47,10 +47,9 @@ def on_receive_data(tag, params, frame):
 
 
 def on_peer_message(message):
-    print(f'on_peer_message {message}')
-    if 'mute' in message:
+    if message == 'mute':
         runner.mute()
-    elif 'unmute' in message:
+    if message == 'unmute':
         runner.un_mute()
 
 

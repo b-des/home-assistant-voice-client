@@ -10,6 +10,8 @@ from config import config
 
 log = logger.get(__name__)
 
+SUB_FILTER = 'request'
+
 
 class Client:
     def __init__(self, url: str, name: str):
@@ -23,7 +25,7 @@ class Client:
         self.pub.bind(f"tcp://*:{config.get('ZEROMQ_PEERS_PORT')}")
 
         self.sub = context.socket(zmq.SUB)
-        self.sub.setsockopt_string(zmq.SUBSCRIBE, "request")
+        self.sub.setsockopt_string(zmq.SUBSCRIBE, SUB_FILTER)
 
         log.info(f'Connecting to {url}')
         self.socket = socket
@@ -46,8 +48,9 @@ class Client:
     async def peer_listener(self, callback):
         while True:
             msg = await self.sub.recv_string()
+            msg = msg.split()
             log.info(f"Got message from peer: {msg}")
-            callback(msg)
+            callback(msg[1])
 
     async def router_listen(self, callback):
         await self.greet()

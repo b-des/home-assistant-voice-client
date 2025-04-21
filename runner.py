@@ -181,7 +181,7 @@ class PreciseRunner(object):
         log.info(f'Mute mic for {timeout} seconds')
         self.is_paused = True
         if timeout > 0:
-            Timer(timeout, lambda: self.un_mute).start()
+            Timer(timeout, self.un_mute).start()
 
     def un_mute(self):
         log.info('Unmute mic')
