@@ -10,7 +10,7 @@ def get_mac_address(interface="eth0"):
 
 
 config = {
-    **dotenv_values(".env"),
     **os.environ,
+    **dotenv_values(".env"),
     'MAC': get_mac_address()
 }

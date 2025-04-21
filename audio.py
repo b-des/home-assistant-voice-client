@@ -1,14 +1,10 @@
-from threading import Timer
-
+import subprocess
 import pyaudio
-from playsound import playsound
 
 
 class Audio(object):
     """Streams raw audio from microphone. Data is received in a separate thread, and stored in a buffer, to be read from."""
-
     FORMAT = pyaudio.paInt16
-    # Network/VAD rate-space
     RATE_PROCESS = 16000
     CHANNELS = 1
     BLOCKS_PER_SECOND = 50
@@ -28,27 +24,19 @@ class Audio(object):
                                    frames_per_buffer=1024)
 
     def play(self, frames):
-        # playsound(filename)
         self.stream.write(frames)
 
     def play_file_async(self, file):
-        Timer(0, playsound, [file]).start()
+        try:
+            subprocess.Popen(["aplay", file])
+        except Exception as e:
+            print(f"Error playing sound: {e}")
 
     def play_file(self, file):
-        playsound(file)
-
-    # with wave.open(file, 'rb') as f:
-    #     width = f.getsampwidth()
-    #     channels = f.getnchannels()
-    #     rate = f.getframerate()
-    #     frames = f.readframes(1024)
-    #     self.stream.write(frames)
-    #     while frames != '':
-    #         self.stream.write(frames)
-    #         frames = f.readframes(11024)
-
-    def _play(self, file):
-        playsound(file)
+        try:
+            subprocess.run(["aplay", file], check=True)
+        except Exception as e:
+            print(f"Error playing sound: {e}")
 
     def close(self):
         # self.stream.stop_stream()

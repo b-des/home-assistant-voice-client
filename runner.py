@@ -5,11 +5,10 @@ from threading import Thread, Event, Timer
 
 import numpy as np
 import openwakeword
-import torch
+from pysilero_vad import SileroVoiceActivityDetector
 from openwakeword.model import Model
 from config import config
-from silero_vad import load_silero_vad, read_audio, get_speech_timestamps
-from utils_vad import int2float
+
 
 openwakeword.utils.download_models()
 
@@ -162,10 +161,8 @@ class PreciseRunner(object):
         self.thread = None
         self.running = False
         self.is_paused = False
-        vad, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad',
-                                    model='silero_vad',
-                                    force_reload=True)
-        self.vad_model = vad
+
+        self.vad_model = SileroVoiceActivityDetector()
         self.detector = TriggerDetector(self.chunk_size, sensitivity, trigger_level)
         self.false_speech_timer = Timer(self.WAIT_FOR_SPEECH_DURATION, self.false_speech_callback)
         self.finish_speech_timer = Timer(self.SILENCE_DELAY_THRESHOLD, lambda: print("finish speech"))
@@ -207,7 +204,7 @@ class PreciseRunner(object):
                 paInt16,
                 True,
                 False,
-                3,
+                int(config.get('SOUND_DEVICE_INDEX', 0)),
                 frames_per_buffer=self.chunk_size
             )
 
@@ -241,13 +238,12 @@ class PreciseRunner(object):
 
     def _wake_word_detected(self, frame):
         prediction = self.model.predict(frame)
-        threshold = 0.2
 
-        if prediction[self.wake_word] > 0.1:
-            print(prediction[self.wake_word])
+        if prediction[self.wake_word] >= 0.6:
+            print(f'Activation without update: {prediction}')
         activated = self.detector.update(prediction[self.wake_word])
         if activated:
-            print(prediction)
+            print(f'Activation with update: {prediction}')
         return activated and not self.wake_word_detected
 
     def _handle_predictions(self):
@@ -265,13 +261,12 @@ class PreciseRunner(object):
             if self.wake_word_detected:
                 self.on_listen_phrase(chunk)
                 self.speech.extend(chunk)
-                audio_float32 = int2float(frame)
-                voice_probability = self.vad_model(torch.from_numpy(audio_float32), 16000).item() * 100
+                voice_probability = self.vad_model(chunk)
 
-                if voice_probability > 90:
+                if voice_probability > 0.5:
                     self.false_speech_timer.cancel()
                     self.finish_speech_timer.cancel()
                     self.speech_detected = True
-                elif voice_probability < 40 and self.speech_detected and not self.finish_speech_timer.is_alive():
+                elif voice_probability < 0.4 and self.speech_detected and not self.finish_speech_timer.is_alive():
                     self.finish_speech_timer = Timer(self.SILENCE_DELAY_THRESHOLD, self.finish_speech_callback)
                     self.finish_speech_timer.start()

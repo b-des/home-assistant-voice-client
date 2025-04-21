@@ -1,17 +1,20 @@
 import asyncio
+import threading
 
 from audio import Audio
 from client import Client
 from commands import Command
 from runner import PreciseRunner
 from config import config
+from udp_discovery import udp_listener, udp_broadcast
 
 main_loop = asyncio.get_event_loop()
 audio = Audio()
-client = Client(config.get('ZEROMQ_HOST'), config.get('NAME'))
+client = Client(config.get('ZEROMQ_ROUTER_HOST'), config.get('NAME'))
 
 
 def on_activation():
+    client.publish('wakeword')
     audio.play_file_async('sounds/click.wav')
     asyncio.run_coroutine_threadsafe(client.send(Command.START_SPEAK.value, b''), main_loop)
 
@@ -41,6 +44,18 @@ def on_receive_data(tag, params, frame):
     if tag == 'WAKEUP':
         runner.wake_up(params['wait_timeout'])
 
+def on_peer_message(message):
+    print(f'Peer message: {message}')
+
+queue = asyncio.Queue()
+
+
+async def udp_consumer():
+    while True:
+        msg = await queue.get()
+        print(f'Message from queue: {msg}')
+        await client.subscribe(msg)
+
 
 runner = PreciseRunner(sensitivity=0.8,
                        on_activation=on_activation,
@@ -54,13 +69,17 @@ if __name__ == "__main__":
     # tasks = [asyncio.create_task(coroutine) for coroutine in [client.run(None), runner.start()]]
 
     audio.play_file('sounds/boot.wav')
-    main_loop.run_until_complete(asyncio.gather(client.run(on_receive_data), runner.start()))
+    threading.Thread(target=udp_listener, args=(main_loop, queue), daemon=True).start()
+    threading.Thread(target=udp_broadcast, daemon=True).start()
+    main_loop.run_until_complete(asyncio.gather(client.start(on_peer_message, on_receive_data), runner.start(), udp_consumer()))
     try:
         print("[main] Starting asyncio event loop")
         main_loop.run_forever()
     except KeyboardInterrupt:
         print("[main] Stopping")
     finally:
+        runner.stop()
+        audio.close()
         main_loop.stop()
 
 # async def main() -> None:

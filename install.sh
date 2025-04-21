@@ -13,6 +13,7 @@ pip install netifaces
 pip install torch
 pip install openwakeword
 pip install silero-vad
+pip install pysilero-vad
 
 
 cat > /etc/asound.conf << EOF
