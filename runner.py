@@ -246,9 +246,11 @@ class PreciseRunner(object):
 
     def pause(self):
         self.is_paused = True
+        self.stream.stop_stream()
 
     def play(self):
         self.is_paused = False
+        self.stream.start_stream()
 
     def _wake_word_detected(self, frame):
         prediction = self.model.predict(frame)

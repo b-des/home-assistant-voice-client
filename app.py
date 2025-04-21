@@ -64,6 +64,7 @@ async def udp_consumer():
 
 
 runner = PreciseRunner(sensitivity=0.8,
+                       trigger_level=1,
                        on_activation=on_activation,
                        on_listen_phrase=on_listen_phrase,
                        on_finish_phrase=on_finish_phrase)
