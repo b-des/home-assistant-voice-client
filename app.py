@@ -34,13 +34,11 @@ def on_finish_phrase(speech_detected, data):
 
 
 def on_receive_data(tag, params, frame):
-    print(tag)
-    print(params)
     if tag == 'SPEAK':
         audio.play(frame)
 
     if tag == 'INIT_CONVERSATION':
-        audio.play_file('sounds/init.mp3')
+        audio.play_file_async('sounds/success-bell.wav')
 
     if tag == 'WAKEUP':
         runner.wake_up(params['wait_timeout'])
